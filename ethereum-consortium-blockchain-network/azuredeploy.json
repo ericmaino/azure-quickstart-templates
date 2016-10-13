@@ -16,10 +16,10 @@
         "description": "Administrator username of each deployed VM"
       }
     },
-    "adminPassword": {
-      "type": "securestring",
+    "adminPublickey": {
+      "type": "string",
       "metadata": {
-        "description": "Administrator password for each deployed VM"
+        "description": "Administrator public key for the deployed VM"
       }
     },
     "ethereumAccountPsswd": {
@@ -39,6 +39,12 @@
       "defaultValue": 10101010,
       "metadata": {
         "description": "Private Ethereum network ID to which to connect"
+      }
+    },
+    "genesisTemplate" : {
+      "type": "string",
+      "metadata": {
+        "description": "Administrator public key for the deployed VM"
       }
     },
     "numConsortiumMembers": {
@@ -110,6 +116,10 @@
       },
       "minValue": 1,
       "maxValue": 5
+    },
+    "artifactsLocationUrl" : {
+      "type" :"string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ethereum-consortium-blockchain-network"
     },
     "txNodeVMSize": {
       "type": "string",
@@ -183,7 +193,7 @@
       "[concat(uniqueString(resourceGroup().id, variables('mnStorageAcctSuffix')), 'mn3')]",
       "[concat(uniqueString(resourceGroup().id, variables('mnStorageAcctSuffix')), 'mn4')]"
     ],
-    "mnVMNamePrefix": "[concat(variables('namingInfix'), '-mn')]",
+    "mnVMNamePrefix": "[concat(variables('namingInfix'), '-mn-')]",
     "mnNIPrefix": "nic-mn",
     "numberToTextArray": [
       "zero",
@@ -195,7 +205,7 @@
     ],
     "txStorageAcctName": "[concat(uniqueString(resourceGroup().id, variables('namingInfix')), 'tx')]",
     "txPublicIPAddressNamePrefix": "[concat(variables('namingInfix'), '-tx-publicip')]",
-    "txVMNamePrefix": "[concat(variables('namingInfix'), '-tx')]",
+    "txVMNamePrefix": "[concat(variables('namingInfix'), '-tx-')]",
     "txSubnetName": "[concat(uniqueString(concat(resourceGroup().id, concat(variables('namingInfix'), 'subnet')), 'tx'))]",
     "txSubnetPrefix": "10.0.10.0/24",
     "txSubnetRef": "[concat(variables('vnetID'),'/subnets/', variables('txSubnetName'))]",
@@ -248,7 +258,7 @@
       "26661f1986f3b9c8bc28fd7aa8abcc5b6967421ccf3069f87d282d2aac040bf3c8b8e07784baf4e7b9b8b07edecf95b1da76e65f7db6612841011dffe154a142",
       "9409170771c71385e67db347013db8b2820b3610fc00c9d777a66178a6554e7098ee16024148b6063b743c345d591f76962f84d5fd441aefaaaddc9a1d83fbda",
       "f7460d34915d54aa716d330f64638e446fca843f1c84fbbc7f50b7f6fd67da375658c97b2829274893d21daa4ee5142773be74f57999985f3d83817e497295cd"],
-    "artifactsLocationURL": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ethereum-consortium-blockchain-network"
+    "artifactsLocationURL": "[parameters('artifactsLocationURL')]"
   },
   "resources": [
     {
@@ -604,7 +614,17 @@
         "osProfile": {
           "computerName": "[concat(variables('txVMNamePrefix'), copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "linuxConfiguration": {
+                "disablePasswordAuthentication": "true",
+                "ssh": {
+                    "publicKeys": [
+                        {
+                            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                            "keyData": "[parameters('adminPublicKey')]"
+                        }
+                    ]
+                }
+            }
         },
         "storageProfile": {
           "imageReference": "[variables('ubuntuImage')]",
@@ -645,8 +665,18 @@
         },
         "osProfile": {
           "computerName": "[concat(variables('mnVMNamePrefix'), copyIndex())]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+         "adminUsername": "[parameters('adminUsername')]",
+          "linuxConfiguration": {
+                "disablePasswordAuthentication": "true",
+                "ssh": {
+                    "publicKeys": [
+                        {
+                            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                            "keyData": "[parameters('adminPublicKey')]"
+                        }
+                    ]
+                }
+            }
         },
         "storageProfile": {
           "imageReference": "[variables('ubuntuImage')]",
